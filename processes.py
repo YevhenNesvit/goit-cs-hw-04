@@ -1,18 +1,22 @@
-import os
 import multiprocessing
 import time
+
 
 def process_files_process(file_paths, keywords, results):
     process_results = {}
     for file_path in file_paths:
-        with open(file_path, 'r') as file:
-            text = file.read()
-            for keyword in keywords:
-                if keyword in text:
-                    if keyword not in process_results:
-                        process_results[keyword] = []
-                    process_results[keyword].append(file_path)
+        try:
+            with open(file_path, 'r') as file:
+                text = file.read()
+                for keyword in keywords:
+                    if keyword in text:
+                        if keyword not in process_results:
+                            process_results[keyword] = []
+                        process_results[keyword].append(file_path)
+        except FileNotFoundError:
+            print(f"File {file_path} not found")
     results.put(process_results)
+
 
 def parallel_file_processing_process(file_paths, keywords, num_processes):
     results = multiprocessing.Queue()
@@ -23,7 +27,8 @@ def parallel_file_processing_process(file_paths, keywords, num_processes):
     for i in range(num_processes):
         start = i * chunk_size
         end = (i + 1) * chunk_size if i < num_processes - 1 else len(file_paths)
-        process = multiprocessing.Process(target=process_files_process, args=(file_paths[start:end], keywords, results))
+        process = multiprocessing.Process(target=process_files_process,
+                                          args=(file_paths[start:end], keywords, results))
         processes.append(process)
         process.start()
 
@@ -42,9 +47,11 @@ def parallel_file_processing_process(file_paths, keywords, num_processes):
 
     return final_results
 
+
 # Example usage
 def main():
-    file_paths = ['../goit-cs-hw-01/task-2.py', '../goit-cs-hw-02/task-2/main.py', '../goit-cs-hw-03/task-1/seed.py', '../goit-cs-hw-03/task-2/cats.py']  # List of file paths
+    file_paths = ['../goit-cs-hw-01/task-2.py', '../goit-cs-hw-02/task-2/main.py',
+                  '../goit-cs-hw-03/task-1/seed.py', '../goit-cs-hw-03/task-2/cats.py']  # List of file paths
     keywords = ['import', 'from']  # List of keywords to search for
     num_processes = 4  # Number of processes to use
 
@@ -54,6 +61,7 @@ def main():
 
     print("Results:", results)
     print("Execution time:", end_time - start_time, "seconds")
+
 
 if __name__ == "__main__":
     main()
